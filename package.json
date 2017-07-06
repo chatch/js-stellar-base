@@ -14,9 +14,7 @@
     "type": "git",
     "url": "https://github.com/stellar/js-stellar-base.git"
   },
-  "keywords": [
-    "stellar"
-  ],
+  "keywords": ["stellar"],
   "engines": {
     "node": ">=4"
   },
@@ -70,7 +68,7 @@
     "base32.js": "~0.1.0",
     "bignumber.js": "^4.0.0",
     "crc": "^3.3.0",
-    "js-xdr": "^1.0.0",
+    "js-xdr": "chatch/js-xdr#master",
     "lodash": "^4.0.1",
     "sha.js": "^2.3.6",
     "tweetnacl": "^0.14.5"
