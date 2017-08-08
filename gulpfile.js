@@ -4,7 +4,10 @@ var gulp        = require('gulp');
 var isparta     = require('isparta');
 var plugins     = require('gulp-load-plugins')();
 var runSequence = require('run-sequence');
-var webpack     = require("webpack");
+var babel       = require('gulp-babel');
+var uglify      = require('gulp-uglify');
+var webpack     = require('webpack');
+var webpackStream = require('webpack-stream');
 
 gulp.task('default', ['build']);
 
@@ -33,7 +36,6 @@ gulp.task('test', function(done) {
   runSequence('clean', 'test:node', 'test:browser', done);
 });
 
-
 gulp.task('hooks:precommit', ['build'], function() {
   return gulp.src(['dist/*', 'lib/*'])
     .pipe(plugins.git.add());
@@ -41,17 +43,21 @@ gulp.task('hooks:precommit', ['build'], function() {
 
 gulp.task('build:node', ['lint:src'], function() {
     return gulp.src('src/**/*.js')
-        .pipe(plugins.babel())
+        .pipe(babel())
         .pipe(gulp.dest('lib'));
 });
 
 gulp.task('build:browser', ['lint:src'], function() {
   return gulp.src('src/browser.js')
-    .pipe(plugins.webpack({
+    .pipe(webpackStream({
       output: { library: 'StellarBase' },
       module: {
-        loaders: [
-          { test: /\.js$/, exclude: /node_modules/, loader: 'babel-loader'}
+        rules: [
+          {
+            test: /\.js$/,
+            exclude: /node_modules/,
+            use: {loader: 'babel-loader', options: {presets: ['env']}}
+          }
         ]
       },
       plugins: [
@@ -61,7 +67,7 @@ gulp.task('build:browser', ['lint:src'], function() {
     }))
     .pipe(plugins.rename('stellar-base.js'))
     .pipe(gulp.dest('dist'))
-    .pipe(plugins.uglify({
+    .pipe(uglify({
       output: {
         ascii_only: true
       }
@@ -72,6 +78,7 @@ gulp.task('build:browser', ['lint:src'], function() {
 
 gulp.task('test:init-istanbul', ['clean-coverage'], function () {
   return gulp.src(['src/**/*.js'])
+    .pipe(babel())
     .pipe(plugins.istanbul({
       instrumenter: isparta.Instrumenter
     }))
@@ -80,7 +87,9 @@ gulp.task('test:init-istanbul', ['clean-coverage'], function () {
 
 gulp.task('test:node', ['build:node', 'test:init-istanbul'], function() {
   return gulp.src(["test/test-helper.js", "test/unit/**/*.js"])
+    .pipe(babel())
     .pipe(plugins.mocha({
+      compilers: ['js:babel-register'],
       reporter: ['dot']
     }))
     .pipe(plugins.istanbul.writeReports());
